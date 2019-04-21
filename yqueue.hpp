@@ -64,7 +64,7 @@ namespace zmq
              begin_pos = 0;
              back_chunk = NULL;
              back_pos = 0;
-             end_chunk = begin_chunk;
+             end_chunk = begin_chunk; // end_chunk为back_chunk的先行者，之后会把最新的值交给back_trunk
              end_pos = 0;
         }
 
@@ -165,7 +165,10 @@ namespace zmq
                 //  'o' has been more recently used than spare_chunk,
                 //  so for cache reasons we'll get rid of the spare and
                 //  use 'o' as the spare.
-                chunk_t *cs = spare_chunk.xchg (o);
+                // spare_chunk的xchg方法类似跷跷板，将之前的值返回
+                chunk_t *cs = spare_chunk.xchg (o); 
+                // 如果之前的值为NULL，则free(NULL)无影响；
+                // 否则回收由于连续pop产生的连续2个trunk内存块
                 free (cs);
             }
         }

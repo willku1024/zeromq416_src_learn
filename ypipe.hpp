@@ -87,7 +87,7 @@ namespace zmq
             queue.push ();
 
             //  Move the "flush up to here" poiter.
-            if (!incomplete_)
+            if (!incomplete_) // if(未完成为false)->即没有未完成  的时候执行
                 f = &queue.back ();
         }
 
@@ -99,7 +99,7 @@ namespace zmq
         //  item exists, false otherwise.
         inline bool unwrite (T *value_)
         {
-            if (f == &queue.back ())
+            if (f == &queue.back ()) // flush位置和当前队列末尾一致，不允许撤销
                 return false;
             queue.unpush ();
             *value_ = queue.back ();
@@ -112,10 +112,15 @@ namespace zmq
         inline bool flush ()
         {
             //  If there are no un-flushed items, do nothing.
+            //  flush()函数移动w至f的位置
+            //  多次fulsh无用，w也不会再移动了
             if (w == f)
                 return true;
 
-            //  Try to set 'c' to 'f'.
+            //  Try to set 'c' to 'f'. 
+            // c.cas (w, f) == w说明c==w，c.cas (w, f) != w 说明c!=w
+            // c!=w是因为c被置为null，因为后面的read线程会置c为null
+            // c==w,return w ; c!=w,return c
             if (c.cas (w, f) != w) {
 
                 //  Compare-and-swap was unseccessful because 'c' is NULL.
@@ -138,8 +143,11 @@ namespace zmq
         inline bool check_read ()
         {
             //  Was the value prefetched already? If so, return.
+            // 可以读r和front之间的内容，如果r和front有指针差，直接返回继续读
             if (&queue.front () != r && r)
                  return true;
+            
+            //=== 以下代码实现了惰性读的策略，只有r和front重合时才继续检查能否移动r指针 ==
 
             //  There's no prefetched value, so let us prefetch more values.
             //  Prefetching is to simply retrieve the
