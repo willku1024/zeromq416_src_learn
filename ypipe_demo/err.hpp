@@ -1,0 +1,82 @@
+/*
+    Copyright (c) 2007-2015 Contributors as noted in the AUTHORS file
+
+    This file is part of libzmq, the ZeroMQ core engine in C++.
+
+    libzmq is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License (LGPL) as published
+    by the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+
+    As a special exception, the Contributors give you permission to link
+    this library with independent modules to produce an executable,
+    regardless of the license terms of these independent modules, and to
+    copy and distribute the resulting executable under terms of your choice,
+    provided that you also meet, for each linked independent module, the
+    terms and conditions of the license of that module. An independent
+    module is a module which is not derived from or based on this library.
+    If you modify this library, you must extend this exception to your
+    version of the library.
+
+    libzmq is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+    License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef __ZMQ_ERR_HPP_INCLUDED__
+#define __ZMQ_ERR_HPP_INCLUDED__
+
+#include <assert.h>
+#include "likely.hpp"
+
+#define zmq_assert(x) \
+    do {\
+        if (unlikely (!(x))) {\
+            fprintf (stderr, "Assertion failed: %s (%s:%d)\n", #x, \
+                __FILE__, __LINE__);\
+        }\
+    } while (false)
+
+//  Provides convenient way to check for errno-style errors.
+#define errno_assert(x) \
+    do {\
+        if (unlikely (!(x))) {\
+            const char *errstr = strerror (errno);\
+            fprintf (stderr, "%s (%s:%d)\n", errstr, __FILE__, __LINE__);\
+        }\
+    } while (false)
+
+//  Provides convenient way to check for POSIX errors.
+#define posix_assert(x) \
+    do {\
+        if (unlikely (x)) {\
+            const char *errstr = strerror (x);\
+            fprintf (stderr, "%s (%s:%d)\n", errstr, __FILE__, __LINE__);\
+        }\
+    } while (false)
+
+//  Provides convenient way to check for errors from getaddrinfo.
+#define gai_assert(x) \
+    do {\
+        if (unlikely (x)) {\
+            const char *errstr = gai_strerror (x);\
+            fprintf (stderr, "%s (%s:%d)\n", errstr, __FILE__, __LINE__);\
+        }\
+    } while (false)
+
+//  Provides convenient way to check whether memory allocation have succeeded.
+#define alloc_assert(x) \
+    do {\
+        if (unlikely (!x)) {\
+            fprintf (stderr, "FATAL ERROR: OUT OF MEMORY (%s:%d)\n",\
+                __FILE__, __LINE__);\
+        }\
+    } while (false)
+
+#endif
+
+
